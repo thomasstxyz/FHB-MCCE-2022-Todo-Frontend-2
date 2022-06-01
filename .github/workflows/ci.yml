@@ -23,7 +23,7 @@ jobs:
         with:
           command: cp
           flags: --recursive
-          source: ./dist/
+          source: ./dist/todo-frontend-bundled/
           destination: s3://tmcsp-team-j-todo-app/
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
