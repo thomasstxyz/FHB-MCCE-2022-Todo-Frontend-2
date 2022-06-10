@@ -16,33 +16,31 @@ jobs:
           npm run build --prod
 
       - name: request access token from Okta
-        uses: wei/curl@master
-        with:
-          args: |
-            --location --request POST 'https://${{ secrets.TRICENTIS_TENANT }}.oktapreview.com/oauth2/default/v1/token' \
-            --header 'Content-Type: application/x-www-form-urlencoded' \
-            --data-urlencode 'grant_type=client_credentials' \
-            --data-urlencode 'client_id=E2G_Agents' \
-            --data-urlencode 'client_secret=${{ secrets.OKTA_CLIENT_SECRET }}' \
-            --data-urlencode 'scope=E2GApi' \
-            --output response.json
+        run: |
+          curl \
+          --location --request POST 'https://${{ secrets.TRICENTIS_TENANT }}.oktapreview.com/oauth2/default/v1/token' \
+          --header 'Content-Type: application/x-www-form-urlencoded' \
+          --data-urlencode 'grant_type=client_credentials' \
+          --data-urlencode 'client_id=E2G_Agents' \
+          --data-urlencode 'client_secret=${{ secrets.OKTA_CLIENT_SECRET }}' \
+          --data-urlencode 'scope=E2GApi' \
+          --output response.json
 
       - name: persist access token in environment $GITHUB_ENV
         run: echo "TRICENTIS_ACCESS_TOKEN=$(cat response.json | jq -r .access_token)" >> $GITHUB_ENV
 
       - name: trigger test flow execution on Tricentis Elastic Execution Grid
-        uses: wei/curl@master
-        with:
-          args: |
-            --location --request POST 'https://${{ secrets.TRICENTIS_TENANT }}.my.tricentis.com/default/_e2g/api/flowExecutions' \
-            --header 'Content-Type: application/json' \
-            --header 'X-Tricentis: OK' \
-            --header 'Accept-Language: de' \
-            --header 'Authorization: Bearer ${{ env.TRICENTIS_ACCESS_TOKEN }}' \
-            --data-raw '{
-              "flowId": "${{ secrets.TRICENTIS_FLOW_ID }}",
-              "timeoutInMinutes": 300
-            }'          
+        run: |
+          curl \
+          --location --request POST 'https://${{ secrets.TRICENTIS_TENANT }}.my.tricentis.com/default/_e2g/api/flowExecutions' \
+          --header 'Content-Type: application/json' \
+          --header 'X-Tricentis: OK' \
+          --header 'Accept-Language: de' \
+          --header 'Authorization: Bearer ${{ env.TRICENTIS_ACCESS_TOKEN }}' \
+          --data-raw '{
+            "flowId": "${{ secrets.TRICENTIS_FLOW_ID }}",
+            "timeoutInMinutes": 300
+          }'          
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
