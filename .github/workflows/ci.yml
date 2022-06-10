@@ -25,10 +25,10 @@ jobs:
             --data-urlencode 'client_id=E2G_Agents' \
             --data-urlencode 'client_secret=${{ secrets.OKTA_CLIENT_SECRET }}' \
             --data-urlencode 'scope=E2GApi' \
-            --output /tmp/response.json
+            --output response.json
 
       - name: persist access token in environment $GITHUB_ENV
-        run: echo "TRICENTIS_ACCESS_TOKEN=$(cat /tmp/response.json)" >> $GITHUB_ENV
+        run: echo "TRICENTIS_ACCESS_TOKEN=$(cat response.json)" >> $GITHUB_ENV
 
       - name: trigger test flow execution on Tricentis Elastic Execution Grid
         uses: wei/curl@master
