@@ -28,7 +28,7 @@ jobs:
             --output response.json
 
       - name: persist access token in environment $GITHUB_ENV
-        run: echo "TRICENTIS_ACCESS_TOKEN=$(cat response.json)" >> $GITHUB_ENV
+        run: echo "TRICENTIS_ACCESS_TOKEN=$(cat response.json | jq -r .access_token)" >> $GITHUB_ENV
 
       - name: trigger test flow execution on Tricentis Elastic Execution Grid
         uses: wei/curl@master
