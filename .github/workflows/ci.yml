@@ -40,7 +40,51 @@ jobs:
           --data-raw '{
             "flowId": "${{ secrets.TRICENTIS_FLOW_ID }}",
             "timeoutInMinutes": 300
-          }'          
+          }' \
+          --output response.json
+
+      - name: persist execution ID in environment $GITHUB_ENV
+        run: echo "TRICENTIS_EXECUTION_ID=$(cat response.json | jq -r .id)" >> $GITHUB_ENV
+
+      - name: get status of test run from Tricentis E2G
+        run: |
+          testFinished="no"
+          while [ $testFinished = "no" ]; do
+            curl \
+            --location --request GET 'https://${{ secrets.TRICENTIS_TENANT }}.my.tricentis.com/default/_e2g/api/executionPackageRuns/${{ env.TRICENTIS_EXECUTION_ID }}' \
+            --header 'Content-Type: application/json' \
+            --header 'Authorization: Bearer ${{ env.TRICENTIS_ACCESS_TOKEN }}' \
+            --output response.json
+            # check if JUnit result value json response exists and is a UUID
+            if jq -r .subFlows[].units[0].results.JUnit res.json | grep -Eo [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} ; then
+              testFinished="yes"
+            fi
+            sleep 10
+          done
+
+      - name: persist unit ID in environment $GITHUB_ENV
+        run: echo "TRICENTIS_UNIT_ID=$(cat response.json | jq -r .subFlows[].units[0].unitId)" >> $GITHUB_ENV
+
+      - name: get result of test run from Tricentis E2G
+        run: |
+          curl \
+          --location --request GET 'https://${{ secrets.TRICENTIS_TENANT }}.my.tricentis.com/default/_e2g/api/executionPackageRuns/${{ env.TRICENTIS_EXECUTION_ID }}/allUnits/${{ env.TRICENTIS_UNIT_ID }}/results/JUnit' \
+          --header 'Content-Type: application/json' \
+          --header 'Authorization: Bearer ${{ env.TRICENTIS_ACCESS_TOKEN }}' \
+          --output response.json
+
+      - name: persist content download url in environment $GITHUB_ENV
+        run: echo "TRICENTIS_CONTENT_DOWNLOAD_URL=$(cat response.json | jq -r .contentDownloadUrl)" >> $GITHUB_ENV
+
+      - name: download JUnit test result
+        run: |
+          curl \
+          --location --request GET ${{ env.TRICENTIS_CONTENT_DOWNLOAD_URL }} \
+          --output JUnit.xml
+
+      - name: check if 'failures="0"' in JUnit.xml
+        run: |
+          grep 'failures="0"' JUnit.xml
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
