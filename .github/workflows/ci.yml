@@ -56,7 +56,7 @@ jobs:
             --header 'Authorization: Bearer ${{ env.TRICENTIS_ACCESS_TOKEN }}' \
             --output response.json
             # check if JUnit result value json response exists and is a UUID
-            if jq -r .subFlows[].units[0].results.JUnit res.json | grep -Eo [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} ; then
+            if jq -r .subFlows[].units[0].results.JUnit response.json | grep -Eo [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} ; then
               testFinished="yes"
             fi
             sleep 10
