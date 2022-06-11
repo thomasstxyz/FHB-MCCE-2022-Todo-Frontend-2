@@ -54,10 +54,12 @@ jobs:
             --location --request GET 'https://${{ secrets.TRICENTIS_TENANT }}.my.tricentis.com/default/_e2g/api/executionPackageRuns/${{ env.TRICENTIS_EXECUTION_ID }}' \
             --header 'Content-Type: application/json' \
             --header 'Authorization: Bearer ${{ env.TRICENTIS_ACCESS_TOKEN }}' \
-            --output response.json
+            --output response.json >/dev/null
             # check if JUnit result value json response exists and is a UUID
             if jq -r .subFlows[].units[0].results.JUnit response.json | grep -Eo [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} ; then
               testFinished="yes"
+              echo test has finished!
+            else
               echo waiting for test to finish ...
             fi
             sleep 10
@@ -80,7 +82,7 @@ jobs:
       - name: download JUnit test result
         run: |
           curl \
-          --location --request GET ${{ env.TRICENTIS_CONTENT_DOWNLOAD_URL }} \
+          --location --request GET '${{ env.TRICENTIS_CONTENT_DOWNLOAD_URL }}' \
           --header 'Authorization: Bearer ${{ env.TRICENTIS_ACCESS_TOKEN }}' \
           --output JUnit.xml
 
